@@ -309,53 +309,53 @@ const renameFiles = (
                 newJavaViewManagerData
             )
 
-            // Modify example's `project.pbxproj`
-            const exampleProjectData = fs
-                .readFileSync(`example/ios/${DEFAULT_SHORT_NAME}Example.xcodeproj/project.pbxproj`)
-                .toString()
-            const newExampleProjectData = replaceDefaultShortName(
-                exampleProjectData,
-                shortName
-            )
-            fs.writeFileSync(
-                `example/ios/${DEFAULT_SHORT_NAME}Example.xcodeproj/project.pbxproj`,
-                newExampleProjectData
-            )
+            // // Modify example's `project.pbxproj`
+            // const exampleProjectData = fs
+            //     .readFileSync(`example/ios/${DEFAULT_SHORT_NAME}Example.xcodeproj/project.pbxproj`)
+            //     .toString()
+            // const newExampleProjectData = replaceDefaultShortName(
+            //     exampleProjectData,
+            //     shortName
+            // )
+            // fs.writeFileSync(
+            //     `example/ios/${DEFAULT_SHORT_NAME}Example.xcodeproj/project.pbxproj`,
+            //     newExampleProjectData
+            // )
 
-            // Modify `settings.gradle`
-            const settingsData = fs
-                .readFileSync('example/android/settings.gradle')
-                .toString()
-            const newSettingsData = settingsData.replace(
-                new RegExp(DEFAULT_NAME, 'g'),
-                name
-            )
-            fs.writeFileSync('example/android/settings.gradle', newSettingsData)
+            // // Modify `settings.gradle`
+            // const settingsData = fs
+            //     .readFileSync('example/android/settings.gradle')
+            //     .toString()
+            // const newSettingsData = settingsData.replace(
+            //     new RegExp(DEFAULT_NAME, 'g'),
+            //     name
+            // )
+            // fs.writeFileSync('example/android/settings.gradle', newSettingsData)
 
-            // Modify `build.gradle`
-            const buildData = fs
-                .readFileSync('example/android/app/build.gradle')
-                .toString()
-            const newBuildData = buildData.replace(
-                new RegExp(DEFAULT_NAME, 'g'),
-                name
-            )
-            fs.writeFileSync('example/android/app/build.gradle', newBuildData)
+            // // Modify `build.gradle`
+            // const buildData = fs
+            //     .readFileSync('example/android/app/build.gradle')
+            //     .toString()
+            // const newBuildData = buildData.replace(
+            //     new RegExp(DEFAULT_NAME, 'g'),
+            //     name
+            // )
+            // fs.writeFileSync('example/android/app/build.gradle', newBuildData)
 
-            // Modify `MainApplication.java`
-            const mainApplicationData = fs
-                .readFileSync(
-                    `example/android/app/src/main/java/com/example/${DEFAULT_ANDROID_NAME}/MainApplication.java`
-                )
-                .toString()
-            const newMainApplicationData = replaceDefaultShortName(
-                mainApplicationData,
-                shortName
-            ).replace(defaultAndroidPackageName, androidPackageName)
-            fs.writeFileSync(
-                `example/android/app/src/main/java/com/example/${DEFAULT_ANDROID_NAME}/MainApplication.java`,
-                newMainApplicationData
-            )
+            // // Modify `MainApplication.java`
+            // const mainApplicationData = fs
+            //     .readFileSync(
+            //         `example/android/app/src/main/java/com/example/${DEFAULT_ANDROID_NAME}/MainApplication.java`
+            //     )
+            //     .toString()
+            // const newMainApplicationData = replaceDefaultShortName(
+            //     mainApplicationData,
+            //     shortName
+            // ).replace(defaultAndroidPackageName, androidPackageName)
+            // fs.writeFileSync(
+            //     `example/android/app/src/main/java/com/example/${DEFAULT_ANDROID_NAME}/MainApplication.java`,
+            //     newMainApplicationData
+            // )
         }
     } catch (err) {
         console.log(err)

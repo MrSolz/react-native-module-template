@@ -8,7 +8,7 @@ abstract_target 'ModuleTemplateExamplePods' do
 
   use_react_native!(:path => config["reactNativePath"])
 
-  pod 'react-native-module-template', :path => '../..'
+  # pod 'react-native-module-template', :path => '../..'
 
   target 'Dev' do
   end
