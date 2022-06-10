@@ -87,12 +87,17 @@ const renameFiles = (
     authorName = DEFAULT_AUTHOR_NAME,
     authorEmail = DEFAULT_AUTHOR_EMAIL,
 ) => {
+    const androidName = shortName;
     try {
         // Clear `README.md`
         fs.writeFileSync('README.md', '')
 
-        // JS only mode
-        // Remove .podspec
+        if (jsOnly) {
+            // JS only mode
+            // Remove .podspec
+            fs.unlinkSync(`${DEFAULT_NAME}.podspec`)
+        }
+
         // Modify `package.json`
         const packageData = fs.readFileSync('package.json').toString()
         let newPackageData = packageData
@@ -102,12 +107,14 @@ const renameFiles = (
             .replace(DEFAULT_AUTHOR_EMAIL, authorEmail)
             .replace(/"description": ".+"/g, '"description": ""')
             .replace(/"version": ".+"/g, '"version": "1.0.0"')
-        // JS only mode
-        // Supply only `lib` folder in `package.json`
-        newPackageData = newPackageData.replace(
-            /"files": \[.+\],/s,
-            '"files": [\n    "lib"\n  ],'
-        )
+        if (jsOnly) {
+            // JS only mode
+            // Supply only `lib` folder in `package.json`
+            newPackageData = newPackageData.replace(
+                /"files": \[.+\],/s,
+                '"files": [\n    "lib"\n  ],'
+            )
+        }
         fs.writeFileSync('package.json', newPackageData)
 
         // Modify author in `LICENSE`
@@ -120,69 +127,48 @@ const renameFiles = (
         // const newTsConfigData = tsConfigData.replace(DEFAULT_NAME, name)
         // fs.writeFileSync('example/tsconfig.json', newTsConfigData)
 
+        if (jsOnly) {
+            // JS only mode
+            // Remove native modules from `index.tsx`
+            const indexData = fs.readFileSync('src/index.tsx').toString()
+            const newIndexData = indexData
+                .replace(
+                    new RegExp(
+                        `\nexport default NativeModules.${DEFAULT_SHORT_NAME}Module\n`,
+                        'g'
+                    ),
+                    ''
+                )
+                .replace('NativeModules, ', '')
+            fs.writeFileSync('src/index.tsx', newIndexData)
 
-        // Normal mode
-        // Rename native modules in `index.tsx`
-        const indexData = fs.readFileSync('src/index.tsx').toString()
-        const newIndexData = replaceDefaultShortName(indexData, shortName)
-        fs.writeFileSync('src/index.tsx', newIndexData)
+            // Remove native modules from `App.tsx`
+            const appData = fs.readFileSync('example/app/navigators/app-navigator.js').toString()
+            const newAppData = appData
+                .replace(`${DEFAULT_SHORT_NAME}Module, `, '')
+                .replace(`${DEFAULT_SHORT_NAME}Module`, "''")
+                .replace(DEFAULT_NAME, name)
+            fs.writeFileSync('example/app/navigators/app-navigator.js', newAppData)
 
-        // Rename native modules in `App.tsx`
-        const appData = fs.readFileSync('example/app/navigators/app-navigator.js').toString()
-        const newAppData = replaceDefaultShortName(appData, shortName).replace(
-            DEFAULT_NAME,
-            name
-        )
-        fs.writeFileSync('example/app/navigators/app-navigator.js', newAppData)
+            // Remove native folders
+            fs.rmdirSync('ios', { recursive: true })
+            fs.rmdirSync('android', { recursive: true })
+        } else {
+            // Normal mode
+            // Rename native modules in `index.tsx`
+            const indexData = fs.readFileSync('src/index.tsx').toString()
+            const newIndexData = replaceDefaultShortName(indexData, shortName)
+            fs.writeFileSync('src/index.tsx', newIndexData)
 
-        // // Modify example's `project.pbxproj`
-        // const exampleProjectData = fs
-        //     .readFileSync(`example/ios/${DEFAULT_SHORT_NAME}Example.xcodeproj/project.pbxproj`)
-        //     .toString()
-        // const newExampleProjectData = replaceDefaultShortName(
-        //     exampleProjectData,
-        //     shortName
-        // )
-        // fs.writeFileSync(
-        //     `example/ios/${DEFAULT_SHORT_NAME}Example.xcodeproj/project.pbxproj`,
-        //     newExampleProjectData
-        // )
+            // Rename native modules in `App.tsx`
+            const appData = fs.readFileSync('example/app/navigators/app-navigator.js').toString()
+            const newAppData = replaceDefaultShortName(appData, shortName).replace(
+                DEFAULT_NAME,
+                name
+            )
+            fs.writeFileSync('example/app/navigators/app-navigator.js', newAppData)
 
-        // // Modify `settings.gradle`
-        // const settingsData = fs
-        //     .readFileSync('example/android/settings.gradle')
-        //     .toString()
-        // const newSettingsData = settingsData.replace(
-        //     new RegExp(DEFAULT_NAME, 'g'),
-        //     name
-        // )
-        // fs.writeFileSync('example/android/settings.gradle', newSettingsData)
-
-        // // Modify `build.gradle`
-        // const buildData = fs
-        //     .readFileSync('example/android/app/build.gradle')
-        //     .toString()
-        // const newBuildData = buildData.replace(
-        //     new RegExp(DEFAULT_NAME, 'g'),
-        //     name
-        // )
-        // fs.writeFileSync('example/android/app/build.gradle', newBuildData)
-
-        // // Modify `MainApplication.java`
-        // const mainApplicationData = fs
-        //     .readFileSync(
-        //         `example/android/app/src/main/java/com/example/${DEFAULT_ANDROID_NAME}/MainApplication.java`
-        //     )
-        //     .toString()
-        // const newMainApplicationData = replaceDefaultShortName(
-        //     mainApplicationData,
-        //     shortName
-        // ).replace(defaultAndroidPackageName, androidPackageName)
-        // fs.writeFileSync(
-        //     `example/android/app/src/main/java/com/example/${DEFAULT_ANDROID_NAME}/MainApplication.java`,
-        //     newMainApplicationData
-        // )
-
+        }
     } catch (err) {
         console.log(err)
     }
