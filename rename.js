@@ -87,24 +87,12 @@ const renameFiles = (
     authorName = DEFAULT_AUTHOR_NAME,
     authorEmail = DEFAULT_AUTHOR_EMAIL,
 ) => {
-    const androidName = shortName;
     try {
         // Clear `README.md`
         fs.writeFileSync('README.md', '')
 
-        if (jsOnly) {
-            // JS only mode
-            // Remove .podspec
-            fs.unlinkSync(`${DEFAULT_NAME}.podspec`)
-        } else {
-            // Normal mode
-            // Rename .podspec and replace git url
-            fs.renameSync(`${DEFAULT_NAME}.podspec`, `${name}.podspec`)
-            const podspecData = fs.readFileSync(`${name}.podspec`).toString()
-            const newPodspecData = podspecData.replace(DEFAULT_GIT_URL, gitUrl)
-            fs.writeFileSync(`${name}.podspec`, newPodspecData)
-        }
-
+        // JS only mode
+        // Remove .podspec
         // Modify `package.json`
         const packageData = fs.readFileSync('package.json').toString()
         let newPackageData = packageData
@@ -114,14 +102,12 @@ const renameFiles = (
             .replace(DEFAULT_AUTHOR_EMAIL, authorEmail)
             .replace(/"description": ".+"/g, '"description": ""')
             .replace(/"version": ".+"/g, '"version": "1.0.0"')
-        if (jsOnly) {
-            // JS only mode
-            // Supply only `lib` folder in `package.json`
-            newPackageData = newPackageData.replace(
-                /"files": \[.+\],/s,
-                '"files": [\n    "lib"\n  ],'
-            )
-        }
+        // JS only mode
+        // Supply only `lib` folder in `package.json`
+        newPackageData = newPackageData.replace(
+            /"files": \[.+\],/s,
+            '"files": [\n    "lib"\n  ],'
+        )
         fs.writeFileSync('package.json', newPackageData)
 
         // Modify author in `LICENSE`
@@ -134,229 +120,69 @@ const renameFiles = (
         // const newTsConfigData = tsConfigData.replace(DEFAULT_NAME, name)
         // fs.writeFileSync('example/tsconfig.json', newTsConfigData)
 
-        if (jsOnly) {
-            // JS only mode
-            // Remove native modules from `index.tsx`
-            const indexData = fs.readFileSync('src/index.tsx').toString()
-            const newIndexData = indexData
-                .replace(
-                    new RegExp(
-                        `\nexport default NativeModules.${DEFAULT_SHORT_NAME}Module\n`,
-                        'g'
-                    ),
-                    ''
-                )
-                .replace('NativeModules, ', '')
-            fs.writeFileSync('src/index.tsx', newIndexData)
 
-            // Remove native modules from `App.tsx`
-            const appData = fs.readFileSync('example/app/navigators/app-navigator.js').toString()
-            const newAppData = appData
-                .replace(`${DEFAULT_SHORT_NAME}Module, `, '')
-                .replace(`${DEFAULT_SHORT_NAME}Module`, "''")
-                .replace(DEFAULT_NAME, name)
-            fs.writeFileSync('example/app/navigators/app-navigator.js', newAppData)
+        // Normal mode
+        // Rename native modules in `index.tsx`
+        const indexData = fs.readFileSync('src/index.tsx').toString()
+        const newIndexData = replaceDefaultShortName(indexData, shortName)
+        fs.writeFileSync('src/index.tsx', newIndexData)
 
-            // Remove native folders
-            fs.rmdirSync('ios', { recursive: true })
-            fs.rmdirSync('android', { recursive: true })
-        } else {
-            // Normal mode
-            // Rename native modules in `index.tsx`
-            const indexData = fs.readFileSync('src/index.tsx').toString()
-            const newIndexData = replaceDefaultShortName(indexData, shortName)
-            fs.writeFileSync('src/index.tsx', newIndexData)
+        // Rename native modules in `App.tsx`
+        const appData = fs.readFileSync('example/app/navigators/app-navigator.js').toString()
+        const newAppData = replaceDefaultShortName(appData, shortName).replace(
+            DEFAULT_NAME,
+            name
+        )
+        fs.writeFileSync('example/app/navigators/app-navigator.js', newAppData)
 
-            // Rename native modules in `App.tsx`
-            const appData = fs.readFileSync('example/app/navigators/app-navigator.js').toString()
-            const newAppData = replaceDefaultShortName(appData, shortName).replace(
-                DEFAULT_NAME,
-                name
-            )
-            fs.writeFileSync('example/app/navigators/app-navigator.js', newAppData)
+        // // Modify example's `project.pbxproj`
+        // const exampleProjectData = fs
+        //     .readFileSync(`example/ios/${DEFAULT_SHORT_NAME}Example.xcodeproj/project.pbxproj`)
+        //     .toString()
+        // const newExampleProjectData = replaceDefaultShortName(
+        //     exampleProjectData,
+        //     shortName
+        // )
+        // fs.writeFileSync(
+        //     `example/ios/${DEFAULT_SHORT_NAME}Example.xcodeproj/project.pbxproj`,
+        //     newExampleProjectData
+        // )
 
-            // Rename and modify .xcscheme file
-            // fs.renameSync(
-            //     `ios/${DEFAULT_SHORT_NAME}.xcodeproj/xcshareddata/xcschemes/${DEFAULT_SHORT_NAME}.xcscheme`,
-            //     `ios/${DEFAULT_SHORT_NAME}.xcodeproj/xcshareddata/xcschemes/${shortName}.xcscheme`
-            // )
-            // const schemeData = fs
-            //     .readFileSync(
-            //         `ios/${DEFAULT_SHORT_NAME}.xcodeproj/xcshareddata/xcschemes/${shortName}.xcscheme`
-            //     )
-            //     .toString()
-            // const newSchemeData = replaceDefaultShortName(schemeData, shortName)
-            // fs.writeFileSync(
-            //     `ios/${DEFAULT_SHORT_NAME}.xcodeproj/xcshareddata/xcschemes/${shortName}.xcscheme`,
-            //     newSchemeData
-            // )
+        // // Modify `settings.gradle`
+        // const settingsData = fs
+        //     .readFileSync('example/android/settings.gradle')
+        //     .toString()
+        // const newSettingsData = settingsData.replace(
+        //     new RegExp(DEFAULT_NAME, 'g'),
+        //     name
+        // )
+        // fs.writeFileSync('example/android/settings.gradle', newSettingsData)
 
-            // Rename .xcodeproj folder
-            fs.renameSync(
-                `ios/${DEFAULT_SHORT_NAME}.xcodeproj`,
-                `ios/${shortName}.xcodeproj`
-            )
+        // // Modify `build.gradle`
+        // const buildData = fs
+        //     .readFileSync('example/android/app/build.gradle')
+        //     .toString()
+        // const newBuildData = buildData.replace(
+        //     new RegExp(DEFAULT_NAME, 'g'),
+        //     name
+        // )
+        // fs.writeFileSync('example/android/app/build.gradle', newBuildData)
 
-            // Modify `project.pbxproj`
-            const projectData = fs
-                .readFileSync(`ios/${shortName}.xcodeproj/project.pbxproj`)
-                .toString()
-            const newProjectData = replaceDefaultShortName(
-                projectData,
-                shortName
-            ).replace(DEFAULT_AUTHOR_NAME, authorName)
-            fs.writeFileSync(
-                `ios/${shortName}.xcodeproj/project.pbxproj`,
-                newProjectData
-            )
+        // // Modify `MainApplication.java`
+        // const mainApplicationData = fs
+        //     .readFileSync(
+        //         `example/android/app/src/main/java/com/example/${DEFAULT_ANDROID_NAME}/MainApplication.java`
+        //     )
+        //     .toString()
+        // const newMainApplicationData = replaceDefaultShortName(
+        //     mainApplicationData,
+        //     shortName
+        // ).replace(defaultAndroidPackageName, androidPackageName)
+        // fs.writeFileSync(
+        //     `example/android/app/src/main/java/com/example/${DEFAULT_ANDROID_NAME}/MainApplication.java`,
+        //     newMainApplicationData
+        // )
 
-            // Rename and modify bridging header .h file
-            fs.renameSync(
-                `ios/${DEFAULT_SHORT_NAME}-Bridging-Header.h`,
-                `ios/${shortName}-Bridging-Header.h`
-            )
-
-            // Rename and modify .m file
-            fs.renameSync(
-                `ios/${DEFAULT_SHORT_NAME}ViewManager.m`,
-                `ios/${shortName}ViewManager.m`
-            )
-            const implementationData = fs
-                .readFileSync(`ios/${shortName}ViewManager.m`)
-                .toString()
-            const newImplementationData = replaceDefaultShortName(
-                implementationData,
-                shortName
-            ).replace(DEFAULT_AUTHOR_NAME, authorName)
-            fs.writeFileSync(`ios/${shortName}ViewManager.m`, newImplementationData)
-
-            // Rename and modify .swift file
-            fs.renameSync(
-                `ios/${DEFAULT_SHORT_NAME}ViewManager.swift`,
-                `ios/${shortName}ViewManager.swift`
-            )
-            const swiftData = fs
-                .readFileSync(`ios/${shortName}ViewManager.swift`)
-                .toString()
-            const newSwiftData = replaceDefaultShortName(
-                swiftData,
-                shortName
-            ).replace(DEFAULT_AUTHOR_NAME, authorName)
-            fs.writeFileSync(`ios/${shortName}ViewManager.swift`, newSwiftData)
-
-            // Generate Android package name from auther and module names
-            const androidPackageAuthorName = androidName
-                .replace(/\s/g, '')
-                .toLowerCase()
-            const androidPackageName = `com.${androidPackageAuthorName}`
-
-            // Generate current Android package name from default author and module names
-            const defaultAndroidPackageAuthorName = DEFAULT_ANDROID_NAME.replace(
-                /\s/g,
-                ''
-            ).toLowerCase()
-            const defaultAndroidPackageName = `com.${defaultAndroidPackageAuthorName}`
-
-            // Rename package in `AndroidManifest.xml`
-            const manifestData = fs
-                .readFileSync('android/src/main/AndroidManifest.xml')
-                .toString()
-            const newManifestData = manifestData.replace(
-                defaultAndroidPackageName,
-                androidPackageName
-            )
-            fs.writeFileSync('android/src/main/AndroidManifest.xml', newManifestData)
-
-            // Rename package folders
-            fs.renameSync(
-                `android/src/main/java/com/${defaultAndroidPackageAuthorName}`,
-                `android/src/main/java/com/${androidPackageAuthorName}`
-            )
-
-            // Rename and modify Java files
-            fs.renameSync(
-                `android/src/main/java/com/${androidPackageAuthorName}/${DEFAULT_SHORT_NAME}Package.java`,
-                `android/src/main/java/com/${androidPackageAuthorName}/${shortName}Package.java`
-            )
-            fs.renameSync(
-                `android/src/main/java/com/${androidPackageAuthorName}/${DEFAULT_SHORT_NAME}ViewManager.java`,
-                `android/src/main/java/com/${androidPackageAuthorName}/${shortName}ViewManager.java`
-            )
-            const javaModuleData = fs
-                .readFileSync(
-                    `android/src/main/java/com/${androidPackageAuthorName}/${shortName}Package.java`
-                )
-                .toString()
-            const newJavaModuleData = replaceDefaultShortName(
-                javaModuleData,
-                shortName
-            ).replace(defaultAndroidPackageName, androidPackageName)
-            fs.writeFileSync(
-                `android/src/main/java/com/${androidPackageAuthorName}/${shortName}Package.java`,
-                newJavaModuleData
-            )
-            const javaViewManagerData = fs
-                .readFileSync(
-                    `android/src/main/java/com/${androidPackageAuthorName}/${shortName}ViewManager.java`
-                )
-                .toString()
-            const newJavaViewManagerData = replaceDefaultShortName(
-                javaViewManagerData,
-                shortName
-            ).replace(defaultAndroidPackageName, androidPackageName)
-            fs.writeFileSync(
-                `android/src/main/java/com/${androidPackageAuthorName}/${shortName}ViewManager.java`,
-                newJavaViewManagerData
-            )
-
-            // // Modify example's `project.pbxproj`
-            // const exampleProjectData = fs
-            //     .readFileSync(`example/ios/${DEFAULT_SHORT_NAME}Example.xcodeproj/project.pbxproj`)
-            //     .toString()
-            // const newExampleProjectData = replaceDefaultShortName(
-            //     exampleProjectData,
-            //     shortName
-            // )
-            // fs.writeFileSync(
-            //     `example/ios/${DEFAULT_SHORT_NAME}Example.xcodeproj/project.pbxproj`,
-            //     newExampleProjectData
-            // )
-
-            // // Modify `settings.gradle`
-            // const settingsData = fs
-            //     .readFileSync('example/android/settings.gradle')
-            //     .toString()
-            // const newSettingsData = settingsData.replace(
-            //     new RegExp(DEFAULT_NAME, 'g'),
-            //     name
-            // )
-            // fs.writeFileSync('example/android/settings.gradle', newSettingsData)
-
-            // // Modify `build.gradle`
-            // const buildData = fs
-            //     .readFileSync('example/android/app/build.gradle')
-            //     .toString()
-            // const newBuildData = buildData.replace(
-            //     new RegExp(DEFAULT_NAME, 'g'),
-            //     name
-            // )
-            // fs.writeFileSync('example/android/app/build.gradle', newBuildData)
-
-            // // Modify `MainApplication.java`
-            // const mainApplicationData = fs
-            //     .readFileSync(
-            //         `example/android/app/src/main/java/com/example/${DEFAULT_ANDROID_NAME}/MainApplication.java`
-            //     )
-            //     .toString()
-            // const newMainApplicationData = replaceDefaultShortName(
-            //     mainApplicationData,
-            //     shortName
-            // ).replace(defaultAndroidPackageName, androidPackageName)
-            // fs.writeFileSync(
-            //     `example/android/app/src/main/java/com/example/${DEFAULT_ANDROID_NAME}/MainApplication.java`,
-            //     newMainApplicationData
-            // )
-        }
     } catch (err) {
         console.log(err)
     }
